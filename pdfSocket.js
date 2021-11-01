@@ -1,5 +1,8 @@
-const PDFDocument = require("pdfkit");
+import PDFDocument from 'pdfkit';
+// const PDFDocument = require("pdfkit");
+import fillBook  from './helpers/generadorPDF.js';
 
+// const { fillBook } = require('./helpers/generadorPDF');
 class Connection {
     constructor(io, socket) {
         this.socket = socket;
@@ -12,7 +15,6 @@ class Connection {
     }
 
     handleMessage(value) {
-      console.log(value);
         var myDoc = new PDFDocument({ bufferPages: true });
         let buffers = [];
         myDoc.on("data", buffers.push.bind(buffers));
@@ -20,9 +22,19 @@ class Connection {
             let pdfData = Buffer.concat(buffers);
             this.sendMessage(pdfData);
         });
-        //TODO: get pdf data using value (url)
-        myDoc.font("Times-Roman").fontSize(12).text(`${value}`);
-        myDoc.end();
+
+        (async () =>{
+            // let wait = new Promise((resolve,reject)=>{
+            //     setTimeout(() => {
+            //         resolve();
+            //     }, 50000);
+            // })
+            // wait.then(() => myDoc.end());
+            fillBook(myDoc,value).then(() => myDoc.end());
+            // await fillBook(myDoc,value);
+            // myDoc.end();
+            
+        })();
     }
 
 }
@@ -33,4 +45,4 @@ function pdfSocket(io) {
     });
 }
 
-module.exports = pdfSocket;
+export default pdfSocket;

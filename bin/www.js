@@ -1,14 +1,19 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
 /**
  * Module dependencies.
  */
+import express from 'express';
+import cors from 'cors';
+import pdfSocket from '../pdfSocket.js';
+import { Server } from "socket.io";
+import http from 'http';
 
-var express = require("express");
-var cors = require("cors");
-var pdfSocket = require("../pdfSocket");
-var socketio = require("socket.io");
-var debug = require("debug")("chat-server:server");
-var http = require("http");
+// var express = require("express");
+// var cors = require("cors");
+// var pdfSocket = require("../pdfSocket");
+// var socketio = require("socket.io");
+// var debug = require("debug")("chat-server:server");
+// var http = require("http");
 
 /**
  * Create express app
@@ -27,10 +32,11 @@ app.set("port", port);
  * Create HTTP server.
  */
 var server = http.createServer(app);
-var io = socketio(server, {
+var io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"],
+        credentials: true
     },
 });
 pdfSocket(io);
@@ -94,6 +100,6 @@ function onError(error) {
 function onListening() {
     var addr = server.address();
     var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
-    debug("Listening on " + bind);
+    // debug("Listening on " + bind);
     console.log("Listening on " + bind);
 }
