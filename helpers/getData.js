@@ -11,7 +11,7 @@ let getData = async (url) => {
     let error = false;
     do {
         try {
-            let { data } = await axios.get(url, options);
+            const { data } = process.env.NODE_ENV === "development" ? await axios.get(url) : await axios.get(url, options);
             body = data;
             error = false;
         } catch (err) {
@@ -22,9 +22,4 @@ let getData = async (url) => {
     return body;
 };
 
-// (async () => {
-//     for (let i = 0; i < 2; i++) {
-//         console.log(await getData("http://lumtest.com/myip.json", options));
-//     }
-// })();
 export default getData;

@@ -8,13 +8,6 @@ import pdfSocket from '../pdfSocket.js';
 import { Server } from "socket.io";
 import http from 'http';
 
-// var express = require("express");
-// var cors = require("cors");
-// var pdfSocket = require("../pdfSocket");
-// var socketio = require("socket.io");
-// var debug = require("debug")("chat-server:server");
-// var http = require("http");
-
 /**
  * Create express app
  */
@@ -25,7 +18,7 @@ app.use(cors());
 /**
  * Get port from environment and store in Express.
  */
-var port = normalizePort(process.env.PORT || "3000");
+var port = normalizePort(process.env.PORT || "3006");
 app.set("port", port);
 
 /**

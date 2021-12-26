@@ -1,10 +1,13 @@
 {
   "type": "module",
-  "name": "chat-server",
+  "name": "pdf-server",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "startServer": "set NODE_ENV=development&& node ./bin/www",
+    "startClient": "cd ../pdf-client && npm start",
+    "dev": "concurrently --kill-others \"npm run startServer\" \"npm run startClient\""
   },
   "dependencies": {
     "axios-https-proxy-fix": "^0.17.1",
@@ -16,5 +19,8 @@
     "pdfkit": "^0.13.0",
     "socket.io": "4.1.2",
     "user-agents": "^1.0.823"
+  },
+  "devDependencies": {
+    "concurrently": "^6.5.1"
   }
 }

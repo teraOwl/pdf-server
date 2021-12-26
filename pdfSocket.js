@@ -1,8 +1,6 @@
 import PDFDocument from 'pdfkit';
-// const PDFDocument = require("pdfkit");
 import fillBook  from './helpers/generadorPDF.js';
 
-// const { fillBook } = require('./helpers/generadorPDF');
 class Connection {
     constructor(io, socket) {
         this.socket = socket;
@@ -22,18 +20,9 @@ class Connection {
             let pdfData = Buffer.concat(buffers);
             this.sendMessage(pdfData);
         });
-
+        
         (async () =>{
-            // let wait = new Promise((resolve,reject)=>{
-            //     setTimeout(() => {
-            //         resolve();
-            //     }, 50000);
-            // })
-            // wait.then(() => myDoc.end());
             fillBook(myDoc,value).then(() => myDoc.end());
-            // await fillBook(myDoc,value);
-            // myDoc.end();
-            
         })();
     }
 
