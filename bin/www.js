@@ -2,18 +2,45 @@
 /**
  * Module dependencies.
  */
-import express from 'express';
-import cors from 'cors';
-import pdfSocket from '../pdfSocket.js';
+import express from "express";
+import cors from "cors";
+import pdfSocket from "../pdfSocket.js";
 import { Server } from "socket.io";
-import http from 'http';
-
+import http from "http";
+import getBooks from "../helpers/getBooks.js";
+import getTopRatedBooks from "../helpers/getTopRatedBooks.js";
+import dotenv from 'dotenv'
+dotenv.config();
 /**
  * Create express app
  */
 var app = express();
-app.use(express.static('public'))
+app.use(express.static("public"));
 app.use(cors());
+console.log(process.env);
+app.get("/api/getBooks/:search", async ({ params: { search } }, res) => {
+    console.log(search);
+    let output = "error";
+    try {
+        output = await getBooks(search);
+        // console.log(output);
+    } catch (err) {
+        console.log(err);
+    }
+    res.send(output).status(200).end();
+});
+
+app.get("/api/getTopRatedBooks/", async ({ params: { search } }, res) => {
+    console.log(search);
+    let output = "error";
+    try {
+        output = await getTopRatedBooks();
+        console.log(output);
+    } catch (err) {
+        console.log(err);
+    }
+    res.send(output).status(200).end();
+});
 
 /**
  * Get port from environment and store in Express.
@@ -29,7 +56,7 @@ var io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: true,
     },
 });
 pdfSocket(io);
