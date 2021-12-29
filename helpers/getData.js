@@ -9,20 +9,16 @@ let getData = async (url) => {
     options.headers = { "User-Agent": UA };
     let body = "";
     let error = false;
-    // console.log(options);
+    let errorCount = 0;
     do {
         try {
-            const { data } =
-            process.env.NODE_ENV === "development" ? await axios.get(url)  : await axios.get(url, options);
+            const {data} = process.env.NODE_ENV === "development" ? await axios.get(url)  :  await axios.get(url, options);
             body = data;
             error = false;
         } catch (err) {
-            console.log(err);
-            if (err.response.status === 404 || err.response.status ===  503) {
-                error = false;
-            }else{
-                error = true;
-            }
+            // console.log(err);
+            error = ( (err?.response?.status !== 404 || err?.response?.status !==  503) && errorCount < 100);
+            errorCount++;
         }
     } while (error);
 

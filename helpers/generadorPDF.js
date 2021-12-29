@@ -1,73 +1,59 @@
 import cheerio from "cheerio";
 import getData from "./getData.js";
 
-let pageCounter = 1;
-async function fillBook(bookPDF, url, connection) {
-    pageCounter = 1;
+
+async function fillBook(bookPDF, url, maxPage, connection) {
+ 
     console.log(url);
-    let pageNotFound = false;
     
     try {
-        await fill(url, bookPDF,connection);
+        let cheerioData = await getCheerioData(maxPage, url, connection);
+
+        if (cheerioData.length > 0){
+            writePDF(bookPDF, cheerioData);
+        }else{
+            bookPDF.text(`Sorry, for some reason we couldn't get that book, read it online! ${url}\n`);
+            throw new Error();
+        }
     } catch (err) {
         console.log(err);
-        pageNotFound = true;
-    }
-
-    if (pageNotFound) {
-        url = parseUrl(url);
-        console.log(url);
-        try{
-            await fill(url, bookPDF,connection);
-        }catch(err){
-            console.log(err);
-        }
+        throw new Error("Book couldn't be reached");
     }
 
 }
 
-function parseUrl(url) {
-    const splitted = url.split("/");
-    //Some urls could be /fullbook/ or /scrolablehtml/
-    splitted[3] = "scrolablehtml";
-    return splitted.join("/");
-};
+async function getCheerioData(maxPage, url, connection) {
+    const promises = getPromisesToScrapeConcurrently(maxPage, url, connection);
+    let resolvedPromises = await Promise.all(promises);
+    let cheerioData = resolvedPromises.map(cheerio.load);
+    cheerioData = cheerioData.filter(($) => Array.from($(".bookfont p")).length > 5);
+    return cheerioData;
+}
 
-async function fill(url, bookPDF,connection) {
-    
-    const maxPage = await getMaxPage(url);
-    console.log(`maxPage: ${maxPage}`);
-    if (!maxPage) {
-        throw new Error("Book couldn't be reached")
-    }
-    connection.io.sockets.emit("maxPage", maxPage);
-    let INITIAL_PAGE = 1;
-    let currentPage = INITIAL_PAGE;
+function getPromisesToScrapeConcurrently(maxPage, url, connection) {
+    let pageCounter = 1;
     const promises = [];
 
-    while (currentPage <= maxPage) {
+    for (let currentPage = 1; currentPage <= maxPage; currentPage++) {
         let urlPage = `${url}?page=${currentPage}`;
-        // console.log(urlPage);
-        const promise = getCheerioHtml(urlPage,connection);
-        promises.push(promise);
-        currentPage++;
+        promises.push(Promise.resolve(getData(urlPage)).then((html) => {
+            connection && connection.io.sockets.emit("progress", pageCounter++);
+            return html;
+        }));
     }
-    let resolvedPromises = await Promise.all(promises);
+    return promises;
+}
 
-    resolvedPromises = resolvedPromises.filter(($) => Array.from($(".bookfont p")).length > 5);
-    if (resolvedPromises.length > 0){
-        writePageTitle(bookPDF, INITIAL_PAGE);
-        writePageText(resolvedPromises[0], bookPDF);
-        resolvedPromises.shift();
-        resolvedPromises.forEach(($, i) => {
-            bookPDF.addPage();
-            writePageTitle(bookPDF, i + 2);
-            writePageText($, bookPDF);
-            
-        });
-    }else{
-        bookPDF.text(`Book couldn't be reached\n`);
-    }
+function writePDF(bookPDF, cheerioData) {
+    const INITIAL_PAGE = 1;
+    writePageTitle(bookPDF, INITIAL_PAGE);
+    writePageText(cheerioData[0], bookPDF);
+    cheerioData.shift();
+    cheerioData.forEach(($, i) => {
+        bookPDF.addPage();
+        writePageTitle(bookPDF, i + 2);
+        writePageText($, bookPDF);
+    });
 }
 
 function writePageText($, bookPDF) {
@@ -84,24 +70,6 @@ function writePageTitle(bookPDF, i) {
         bold: true,
         underline: true,
     });
-}
-
-async function getCheerioHtml(url,connection) {
- 
-    const html = await getData(url);
-    if (connection){
-        connection.io.sockets.emit("progress", pageCounter++);
-    }
-
-    // console.log(html);
-    const $ = cheerio.load(html);
-    return $;
-}
-
-async function getMaxPage(url) {
-    const $ = await getCheerioHtml(url);
-    const maxPage = $('select option:last-child').attr('value');
-    return maxPage;
 }
 
 export default fillBook;
