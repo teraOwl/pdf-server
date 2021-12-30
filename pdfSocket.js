@@ -4,6 +4,7 @@ import { getMaxPage } from "./helpers/getMaxPage.js";
 import { getValidUrl } from "./helpers/getValidUrl.js";
 
 let ipsToday = { day: new Date().getDate() };
+
 const MAX_PAGES_PER_DAY = 200;
 class Connection {
     constructor(io, socket, ip) {
@@ -20,7 +21,7 @@ class Connection {
                 this.createBook(value, maxPage);
             } catch (err) {
                 console.log(err);
-                this.io.sockets.emit(err.message);
+                this.io.sockets.emit("error", err.message);
                 this.socket.disconnect();
             }
         });
@@ -52,13 +53,6 @@ class Connection {
     }
 }
 
-function decreaseUserConnection(ip) {
-    return {
-        ...ipsToday,
-        [ip]: { pages: ipsToday[ip].pages, connections: ipsToday[ip].connections - 1 },
-    };
-}
-
 function pdfSocket(io) {
     io.on("connection", (socket) => {
         const ip = getIp(socket);
@@ -71,12 +65,8 @@ function pdfSocket(io) {
 }
 
 function isValidSocket(socket, ip) {
-    if (ipsToday[ip].connections != 1) {
-        socket.disconnect();
-    }
-
     if (ipsToday[ip].pages > MAX_PAGES_PER_DAY) {
-        socket.emit("exceed", "You have reached your limit of pages today");
+        socket.emit("exceed", "You have reached your limit of pages today, come back tomorrow!");
         socket.disconnect();
     }
 
@@ -84,18 +74,11 @@ function isValidSocket(socket, ip) {
 }
 
 function setupSocket(socket, ip) {
-    ipsToday = ipsToday.day !== new Date().getDate() ? {} : ipsToday;
-
+    ipsToday = ipsToday.day !== new Date().getDate() ? {day: new Date().getDate()} : ipsToday;
+    
     socket.on("disconnect", logDisconnectionInfo(ip));
 
-    const increaseConnection = () =>
-        ipsToday[ip]
-            ? { ...ipsToday[ip], connections: ipsToday[ip].connections + 1 }
-            : { pages: 1, connections: 1 };
-
-    ipsToday[ip] = increaseConnection();
-    console.log("Check pages now:");
-    console.log(ipsToday);
+    ipsToday[ip] = ipsToday[ip] ?? { pages: 1 }; 
 }
 
 function getIp(socket) {
@@ -109,13 +92,10 @@ function getIp(socket) {
 }
 
 function logDisconnectionInfo(ip) {
-    return function () {
-        ipsToday = decreaseUserConnection(ip);
-        console.log(ipsToday);
+    return () =>
         console.log(
             `disconnected ${new Date().toLocaleString()} ip: ${JSON.stringify(ipsToday[ip])}`
         );
-    };
 }
 
 export default pdfSocket;

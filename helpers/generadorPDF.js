@@ -17,7 +17,7 @@ async function fillBook(bookPDF, url, maxPage, connection) {
         }
     } catch (err) {
         console.log(err);
-        throw new Error("Book couldn't be reached");
+        throw new Error("Book couldn't be downloaded");
     }
 
 }

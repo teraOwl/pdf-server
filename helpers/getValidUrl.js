@@ -9,7 +9,7 @@ export async function getValidUrl(url) {
         html = await getData(url);
         if (html.length < 100){
             console.log(html.length);
-            throw new Error("Book couldn't be reached");
+            throw new Error("Book not found"); 
         }
     }
 

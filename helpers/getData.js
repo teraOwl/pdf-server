@@ -16,12 +16,11 @@ let getData = async (url) => {
             body = data;
             error = false;
         } catch (err) {
-            // console.log(err);
-            error = ( (err?.response?.status !== 404 || err?.response?.status !==  503) && errorCount < 100);
+            error = ( err?.response?.status !== 404 && err?.response?.status !==  503 && errorCount < 100);
             errorCount++;
-        }
+        } 
     } while (error);
-
+    // console.log(body);
     return body;
 };
 
