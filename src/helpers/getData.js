@@ -3,16 +3,22 @@ import axios from "axios-https-proxy-fix";
 import options from "./options.js";
 import UserAgent from "user-agents";
 
-let getData = async (url) => {
+let getData = async (url, responseType) => {
+    
+    const optionsToUse = (process.env.NODE_ENV === "production") ? options : {};
+
     const userAgent = new UserAgent({ deviceCategory: "mobile" });
     let UA = userAgent.random().data.userAgent;
-    options.headers = { "User-Agent": UA };
+    optionsToUse.headers = { "User-Agent": UA };
+    responseType && (optionsToUse.responseType = responseType);
+    
     let body = "";
     let error = false;
     let errorCount = 0;
+    
     do {
         try {
-            const {data} = process.env.NODE_ENV === "development" ? await axios.get(url)  :  await axios.get(url, options);
+            const {data} =  await axios.get(url, optionsToUse);
             body = data;
             error = false;
         } catch (err) {
@@ -20,7 +26,7 @@ let getData = async (url) => {
             errorCount++;
         } 
     } while (error);
-    // console.log(body);
+    
     return body;
 };
 
