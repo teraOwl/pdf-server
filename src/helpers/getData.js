@@ -15,14 +15,17 @@ let getData = async (url, responseType) => {
     let body = "";
     let error = false;
     let errorCount = 0;
-    
+    if (url.includes("https://www.googleapis.com")){
+        console.log(url);
+    }
     do {
         try {
             const {data} =  await axios.get(url, optionsToUse);
             body = data;
             error = false;
         } catch (err) {
-            error = ( err?.response?.status !== 404 && err?.response?.status !==  503 && errorCount < 100);
+            console.log(err.message);
+            error = ( err?.response?.status !== 404 && err?.response?.status !==  503 && errorCount < 10);
             errorCount++;
         } 
     } while (error);

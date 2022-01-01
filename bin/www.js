@@ -4,38 +4,36 @@
  */
 import express from "express";
 import cors from "cors";
-import pdfSocket from "../pdfSocket.js";
+import pdfSocket from "../src/pdfSocket.js";
 import { Server } from "socket.io";
 import http from "http";
-import getBooks from "../helpers/getBooks.js";
-import getTopRatedBooks from "../helpers/getTopRatedBooks.js";
+import getBooks from "../src/helpers/getBooks.js";
+import getTopRatedBooks from "../src/helpers/getTopRatedBooks.js";
 /**
  * Create express app
  */
 var app = express();
 
 app.use(express.static("public"));
-app.use(cors());
+app.use(cors())
+app.use(express.json());
+
 app.get("/api/getBooks/:search", async ({ params: { search } }, res) => {
-    console.log(search);
     let output = "error";
     try {
         output = await getBooks(search);
-        // console.log(output);
     } catch (err) {
-        console.log(err);
+        console.log(err?.message);
     }
     res.send(output).status(200).end();
 });
 
-app.get("/api/getTopRatedBooks/", async ({ params: { search } }, res) => {
-    console.log(search);
+app.get("/api/getTopRatedBooks/", async (req,res) => {
     let output = "error";
     try {
         output = await getTopRatedBooks();
-        console.log(output);
     } catch (err) {
-        console.log(err);
+        console.log(err?.message);
     }
     res.send(output).status(200).end();
 });

@@ -18,7 +18,7 @@ class Connection {
                 this.io.sockets.emit("maxPage", maxPage);
                 await this.createBook(url, maxPage);
             } catch (err) {
-                console.log(err);
+                console.log(err)?.message;
                 this.io.sockets.emit("error", err.message);
                 this.socket.disconnect();
             }

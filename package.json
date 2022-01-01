@@ -8,15 +8,18 @@
     "startServer": "set NODE_ENV=development&& nodemon ./bin/www",
     "startClient": "cd ../pdf-client && npm start",
     "devClient": "concurrently --kill-others \"npm run startServer\" \"npm run startClient\"",
-    "devServer": "nodemon node ./bin/www"
+    "devServer": "nodemon node ./bin/www",
+    "deploy": "cd ../pdf-client && npm run build"
   },
   "dependencies": {
     "axios-https-proxy-fix": "^0.17.1",
+    "base64-arraybuffer": "^1.0.1",
     "bent": "^7.3.12",
     "cheerio": "^1.0.0-rc.10",
     "cors": "2.8.5",
     "dotenv": "^10.0.0",
     "express": "~4.16.1",
+    "get-stream": "^6.0.1",
     "node-fetch": "^3.0.0",
     "pdfkit": "^0.13.0",
     "socket.io": "^4.4.0",
