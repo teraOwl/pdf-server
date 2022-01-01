@@ -1,24 +1,22 @@
 import PDFDocument from "pdfkit";
-import fillBook from "./helpers/generadorPDF.js";
+import fillBook from "./helpers/PDFGenerator.js";
 import { getMaxPage } from "./helpers/getMaxPage.js";
 import { getValidUrl } from "./helpers/getValidUrl.js";
-
 let ipsToday = { day: new Date().getDate() };
 
-const MAX_PAGES_PER_DAY = 200;
+const MAX_PAGES_PER_DAY = 500;
 class Connection {
     constructor(io, socket, ip) {
         this.socket = socket;
         this.io = io;
         this.ip = ip;
 
-        this.socket.on("message", async (value) => {
+        this.socket.on("message", async (urlAPI) => {
             try {
-                const url = await getValidUrl(value);
+                const url = await getValidUrl(urlAPI);
                 const maxPage = await getMaxPage(url);
-                console.log(maxPage);
                 this.io.sockets.emit("maxPage", maxPage);
-                this.createBook(value, maxPage);
+                await this.createBook(url, maxPage);
             } catch (err) {
                 console.log(err);
                 this.io.sockets.emit("error", err.message);
@@ -31,21 +29,23 @@ class Connection {
         this.io.sockets.emit("message", message);
     }
 
-    createBook(value, maxPage) {
+    async createBook(url, maxPage) {
         var myDoc = new PDFDocument({ bufferPages: true });
         let buffers = [];
         myDoc.on("data", buffers.push.bind(buffers));
+
         myDoc.on("end", () => {
             let pdfData = Buffer.concat(buffers);
             this.sendMessage(pdfData);
             this.incrementIpPages(maxPage);
             this.socket.disconnect();
-            console.log(this.socket.connected);
         });
-
-        (async () => {
-            fillBook(myDoc, value, maxPage, this).then(() => myDoc.end());
-        })();
+        try {
+            await fillBook(myDoc, url, maxPage, this);
+            myDoc.end();
+        } catch (err) {
+            throw err;
+        }
     }
 
     incrementIpPages(maxPage) {
@@ -74,11 +74,11 @@ function isValidSocket(socket, ip) {
 }
 
 function setupSocket(socket, ip) {
-    ipsToday = ipsToday.day !== new Date().getDate() ? {day: new Date().getDate()} : ipsToday;
-    
+    ipsToday = ipsToday.day !== new Date().getDate() ? { day: new Date().getDate() } : ipsToday;
+
     socket.on("disconnect", logDisconnectionInfo(ip));
 
-    ipsToday[ip] = ipsToday[ip] ?? { pages: 1 }; 
+    ipsToday[ip] = ipsToday[ip] ?? { pages: 1 };
 }
 
 function getIp(socket) {
