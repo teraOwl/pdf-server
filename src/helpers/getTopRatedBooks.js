@@ -8,9 +8,12 @@ async function getTopRatedBooks() {
     return $(".top-rated-books:nth-child(2) .row > div")
         .map(function (i, el) {
             return {
-                cover: $(this).find("img").attr("src"),
-                name: $(this).find(".author-custom").parent().text().replace("\n", ""),
-                url: parseUrl($(this).find("a").attr("href")),
+                bookCover: $(this).find("img").attr("src"),
+                bookName: (() => {
+                    const [, bookName, authorBook] = $(this).find(".author-custom").parent().text().match(/([^:]*)(?<!\sby\s).*\s*by\s*(.*)/i);
+                    return `${bookName} by ${authorBook}`;
+                })(),
+                bookUrl: parseUrl($(this).find("a").attr("href")),
             };
         })
         .get();
