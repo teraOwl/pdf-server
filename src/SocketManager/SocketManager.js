@@ -1,5 +1,7 @@
 //@ts-check
 import Connection from '../Connection/Connection.js';
+// import S3 from 'aws-sdk/clients/s3';
+
 // let day = 2;
 class SocketManager {
     constructor(socket, ipManager) {
