@@ -1,19 +1,29 @@
-import getData from "./getData.js";
+import getData from "../helpers/getData.js";
 import cheerio from "cheerio";
+import {response} from 'express';
 
-async function getBooks(search) {
-    const $ = await getCheerio(search);
-    let books = await getUrlAndName($);
-    
-    if (books.length > 0) {
-        books = await getCover(books);
-        books = books.map((book) => ({ ...book, bookUrl: parseUrl(book.bookUrl) }));
+async function getBook(req, res = response) {
+    const { params: { bookNameQuery } } = req;
+    try{
+        const $ = await getCheerio(bookNameQuery);
+        let books = await getUrlAndName($);
+        
+        if (books.length > 0) {
+            books = await getCover(books);
+            books = books.map((book) => ({ ...book, bookUrl: parseUrl(book.bookUrl) }));
+        }
+        res.status(200).json(books);
+    }catch(err){
+        console.log(error)
+        res.status(500).json({
+            ok: false,
+            msg: 'Contact admin'
+        })
     }
-    return books;
 }
 
-async function getCheerio(search) {
-    const urlSearch = `https://booksvooks.com/search.html?q=${search}`;
+async function getCheerio(bookNameQuery) {
+    const urlSearch = `https://booksvooks.com/search.html?q=${bookNameQuery}`;
     const html = await getData(urlSearch);
     const $ = cheerio.load(html);
     return $;
@@ -83,7 +93,7 @@ function parseUrl(url) {
     return splitted.join("/");
 }
  
-export default getBooks;
+export default getBook;
 
 
 
