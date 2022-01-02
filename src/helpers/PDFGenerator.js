@@ -2,19 +2,12 @@ import cheerio from "cheerio";
 import getData from "./getData.js";
 
 async function fillBook(bookPDF, url, maxPage, connection) {
-
     try {
         let cheerioData = await getCheerioData(maxPage, url, connection);
-
-        if (cheerioData.length > 0) {
-            await writePDF(bookPDF, cheerioData, connection);
-        } else {
-            bookPDF.text(
-                `Sorry, for some reason we couldn't get that book, read it online! ${url}\n`
-            );
-            throw new Error("err");
-        }
+        connection.sendMessage("processing", "Parsing pdf...");
+        await fillPdf(cheerioData, bookPDF);
     } catch (err) {
+        console.log(err);
         throw new Error("Book couldn't be downloaded");
     }
 }
@@ -22,8 +15,7 @@ async function fillBook(bookPDF, url, maxPage, connection) {
 async function getCheerioData(maxPage, url, connection) {
     const promises = getPromisesToScrapeConcurrently(maxPage, url, connection);
     let resolvedPromises = await Promise.all(promises);
-    let cheerioData = resolvedPromises.map(cheerio.load);
-    return cheerioData;
+    return resolvedPromises;
 }
 
 function getPromisesToScrapeConcurrently(maxPage, url, connection) {
@@ -33,71 +25,54 @@ function getPromisesToScrapeConcurrently(maxPage, url, connection) {
     for (let currentPage = 1; currentPage <= maxPage; currentPage++) {
         let urlPage = `${url}?page=${currentPage}`;
         promises.push(
-            Promise.resolve(getData(urlPage)).then((html) => {
-                connection && connection.io.sockets.emit("progress", pageCounter++);
-                return html;
+            Promise.resolve(getData(urlPage)).then(async (html) => {
+                connection && connection.sendMessage("progress", pageCounter++);
+                let $ = cheerio.load(html);
+                return getPageContent($);
             })
         );
     }
     return promises;
 }
 
-async function writePDF(bookPDF, cheerioData, connection) {
-    const INITIAL_PAGE = 1;
-    if (cheerioData.some($ =>  $(".bookfont img").length > 0)) {
-        connection && connection.io.sockets.emit("fetchingImages", "Downloading images...");
-    }
-    bookPDF.font("./fonts/Roboto-Regular.ttf");
-    writePageTitle(bookPDF, INITIAL_PAGE);
-    await writePageContent(cheerioData[0], bookPDF);
-    cheerioData.shift();
-    let i = 0;
-    for (let $ of cheerioData) {
-        bookPDF.addPage();
-        writePageTitle(bookPDF, i + 2);
-        await writePageContent($, bookPDF);
-        i++;
-    }
-}
-
-async function writePageContent($, bookPDF) {
-    const promisesToResolve = [];
-    
+async function getPageContent($) {
+    const pageContent = [];
     $(".bookfont p,.bookfont img").each(async function (index, value) {
         if ($(this).attr("src")) {
             let imgUrl = $(this).attr("src");
             imgUrl = `https://booksvooks.com/${imgUrl.split("../")[1]}`;
-            promisesToResolve.push(
-                new Promise((resolve, reject) => {
-                    getData(imgUrl, "arraybuffer").then((data) => {
-                        bookPDF.image(data,{
-                            fit: [400, 400],
-                            align: 'center',
-                            valign: 'center'
-                        });
-                        resolve(true);
-                    });
-                })
-            );
+            pageContent.push(imgUrl);
         }
-        promisesToResolve.push(
-            new Promise((resolve, reject) => {
-                let lane = $(this).text();
-                lane = lane.replace(/  +/g, " ");
-                lane = lane.replace(/[\t]/gm, " ");
-                if (lane.length > 0) {
-                    bookPDF.text(`${lane}\n`, {
-                        width: 410,
-                        align: "justify",
-                    });
-                }
-                resolve(true);
-            })
-        );
+
+        let line = $(this).text();
+        line = line.replace(/  +/g, " ");
+        line = line.replace(/[\t]/gm, " ");
+        if (line.length > 0) {
+            pageContent.push(line);
+        }
     });
-    for (let promise of promisesToResolve) {
-        await promise;
+    return pageContent;
+}
+
+async function fillPdf(cheerioData, bookPDF) {
+    let count = 1;
+    for (const page of cheerioData) {
+        let previousText = false;
+        writePageTitle(bookPDF, count++);
+        for (let line of page) {
+            if (line.startsWith("https://booksvooks.com/")) {
+                try {
+                    await writeImage(line, bookPDF, previousText);
+                } catch (err) {
+                    console.log(err);
+                }
+            } else {
+               previousText = writeLine(line, bookPDF);
+            }
+        }
+        bookPDF.addPage();
     }
+    return count;
 }
 
 function writePageTitle(bookPDF, i) {
@@ -107,6 +82,37 @@ function writePageTitle(bookPDF, i) {
     });
 }
 
-export default fillBook;
+function writeLine(line, bookPDF) {
+    let previousText = false;
+    line = line.replace(/  +/g, " ");
+    line = line.replace(/[\t]/gm, " ");
+    line = line.trim();
+    if (line.length > 2) {
+        previousText = true;
+        bookPDF.text(`${line}\n`, {
+            width: 410,
+            align: "justify",
+        });
+    }
+    return previousText;
+}
 
-// (async() => await fillBook(new PDFDocument({ bufferPages: true }),'https://booksvooks.com/fullbook/timekeeper-pdf-tara-sim.html'))();
+async function writeImage(imageUrl, bookPDF, previousText) {
+    let imageParsed = await getData(imageUrl, "arraybuffer");
+    var img = bookPDF.openImage(imageParsed);
+    let options = {
+        fit: [img.width, img.height],
+        align: "left",
+        valign: "top",
+    };
+
+    if (img.width > bookPDF.page.width || img.height > bookPDF.page.height) {
+        if (previousText) {
+            bookPDF.addPage();
+        }
+        options.fit = [bookPDF.page.width, bookPDF.page.height - 100];
+    }
+    bookPDF.image(imageParsed, options);
+}
+
+export default fillBook;
