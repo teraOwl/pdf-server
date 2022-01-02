@@ -2,17 +2,14 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 import axios from "axios-https-proxy-fix";
 import options from "./options.js";
 import UserAgent from "user-agents";
-import https from "https";
 
 let getData = async (url, responseType) => {
     const optionsToUse = process.env.NODE_ENV === "production" ? options : {};
-
+    // console.log(optionsToUse);
     const userAgent = new UserAgent({ deviceCategory: "mobile" });
     let UA = userAgent.random().data.userAgent;
     optionsToUse.headers = { "User-Agent": UA };
-    optionsToUse.timeout = 60000;
-    optionsToUse.httpsAgent = new https.Agent({ keepAlive: true });
-
+    optionsToUse.timeout = 10000;
     responseType && (optionsToUse.responseType = responseType);
 
     let body = "";
@@ -25,13 +22,26 @@ let getData = async (url, responseType) => {
             body = data;
             error = false;
         } catch (err) {
-            console.log(err.message);
+            !err.message.includes("timeout") &&
+                err.code !== "ECONNABORTED" &&
+                (() => {
+                    console.log(optionsToUse);
+                    console.log(err.message);
+                    console.log(err.code);
+                    console.log(url);
+                })();
+
+            err?.response?.status && console.log(err.response.status);
+            // console.log((err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") &&err?.response?.status !== 404 &&err?.response?.status !== 503 &&errorCount < 30)
             error =
-                err?.response?.status !== 404 && err?.response?.status !== 503 && errorCount < 10;
+                (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") &&
+                err?.response?.status !== 404 &&
+                err?.response?.status !== 503 &&
+                errorCount < 30;
             errorCount++;
         }
     } while (error);
-    
+
     return body;
 };
 
