@@ -46,19 +46,25 @@ class Connection {
 
         myDoc.on("end", () => {
             let pdfData = Buffer.concat(buffers);
-            this.sendMessage("message", pdfData);
-            this.ipManager.incrementIpPages(this.ip, maxPage);
-            S3Manager.upload(pdfData, url);
+            if (pdfData.length > 2000) {
+                this.sendMessage("message", pdfData);
+                this.ipManager.incrementIpPages(this.ip, maxPage);
+                console.log(pdfData.length);
+                S3Manager.upload(pdfData, url);
+            } else {
+                throw new Error("Book not available");
+            }
             this.socket.disconnect();
         });
 
-        try {
-            fillBook(myDoc, url, maxPage, this).then(() => {
-                myDoc.end();
-            });
-        } catch (err) {
-            throw err;
-        }
+        fillBook(myDoc, url, maxPage, this).then(() => {
+            myDoc.end();
+        });
+
+        //Get error from EventEmitters
+        process.on("uncaughtException", (err) => {
+            this.sendMessage("error", err.message);
+        });
     }
 }
 

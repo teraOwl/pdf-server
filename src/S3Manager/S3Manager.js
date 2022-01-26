@@ -3,7 +3,7 @@ import dontenv from 'dotenv';
 dontenv.config();
 
 export const S3Manager = (function () {
-    const parseUrl = (fileUrl) => fileUrl.split('/')[4].split('.html')[0].concat('.pdf');
+    const parseUrl = (fileUrl) => fileUrl.split('/')[4].split('.html')[0];
 
     AWS.config.update({
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -19,11 +19,10 @@ export const S3Manager = (function () {
                 Body: body,
                 ACL: "private",
                 Bucket: process.env.S3_BUCKET,
-                Key: fileName,
+                Key: `${fileName}/pdf/${fileName}.pdf`,
             };
             s3.upload(params, function (err, data) {
                 console.log(`Book ${fileName} uploaded to s3`);
-                console.log(err, data);
             });
         },
         successfullySent: async function (fileUrl,connection) {
@@ -32,7 +31,7 @@ export const S3Manager = (function () {
             try{
                 const {Body} = await s3.getObject({
                     Bucket: process.env.S3_BUCKET,
-                    Key: fileName
+                    Key: `${fileName}/pdf/${fileName}.pdf`,
                 }).promise();
                 connection.sendMessage('message', Body);
             }catch(err){

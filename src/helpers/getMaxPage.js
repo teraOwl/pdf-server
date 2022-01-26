@@ -3,7 +3,7 @@ import getData from "./getData.js";
 
 export async function getMaxPage(url) {
     const $ = await getCheerioHtml(url);
-    const maxPage = $('select option:last-child').attr('value');
+    const maxPage = $('#demo select option:last-child').attr('value');
     return maxPage;
 }
 

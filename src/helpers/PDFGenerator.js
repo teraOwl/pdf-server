@@ -3,6 +3,7 @@ import getData from "./getData.js";
 
 async function fillBook(bookPDF, url, maxPage, connection) {
     try {
+        console.log(maxPage, "maxPage");
         let cheerioData = await getCheerioData(maxPage, url, connection);
         connection.sendMessage("processing", "Parsing pdf...");
         await fillPdf(cheerioData, bookPDF);
@@ -67,7 +68,7 @@ async function fillPdf(cheerioData, bookPDF) {
                     console.log(err);
                 }
             } else {
-               previousText = writeLine(line, bookPDF);
+                previousText = writeLine(line, bookPDF);
             }
         }
         bookPDF.addPage();
