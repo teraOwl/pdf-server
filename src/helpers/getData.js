@@ -25,10 +25,10 @@ let getData = async (url, responseType) => {
             !err.message.includes("timeout") &&
                 err.code !== "ECONNABORTED" &&
                 (() => {
-                    console.log(optionsToUse);
+                    // console.log(optionsToUse);
                     console.log(err.message);
-                    console.log(err.code);
-                    console.log(url);
+                    // console.log(err.code);
+                    // console.log(url);
                 })();
 
             err?.response?.status && console.log(err.response.status);

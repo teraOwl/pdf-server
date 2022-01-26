@@ -44,7 +44,6 @@ export const configureServer = (server, port) => {
     const ipManager = new IpsManager();
 
     io.on("connection", function (socket) {
-        console.log(socket.id);
         new SocketManager(socket, ipManager);
     });
 };
