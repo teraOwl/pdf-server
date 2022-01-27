@@ -7,6 +7,8 @@ To use this backend you need to clone the front-end [pdf-client](https://github.
 
 
 `cd book-server`
+
+Rename sample-env file to .env and config it.
 ## Available Scripts
 
 ### Development

@@ -22,7 +22,12 @@ export const S3Manager = (function () {
                 Key: `${fileName}/pdf/${fileName}.pdf`,
             };
             s3.upload(params, function (err, data) {
-                console.log(`Book ${fileName} uploaded to s3`);
+                if (data){
+                    console.log(`Book ${fileName} uploaded to s3`);
+                }else{
+                    console.log("Check if you have AWS credentials in .env file");
+                    console.log(err.message);
+                }
             });
         },
         successfullySent: async function (fileUrl,connection) {
