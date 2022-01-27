@@ -41,9 +41,11 @@ The build is minified and the filenames include the hashes.\
 Your app is ready to be deployed!
 
 ### Heroku deploy (optional)
-You will need heroku app
+You will need a heroku app.
+
+
 You will need to config .env-production in [pdf-client](https://github.com/teraOwl/book-client)
 
-Commit changes if needed
+Commit changes if needed.
 
-Run `git push heroku master` to deploy
+Run `git push heroku master` to deploy.
