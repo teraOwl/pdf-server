@@ -1,12 +1,24 @@
-# requirements
-To use this backend you need to clone the front-end [pdf-client](https://github.com/teraOwl/book-client).  
-`cd ..`
+# HOW TO INSTALL
+`git clone https://github.com/teraOwl/pdf-server.git`
 
 
-`git clone https://github.com/teraOwl/book-client.git`
+`git clone https://github.com/teraOwl/pdf-client.git`
 
 
-`cd book-server`
+`cd ./pdf-client`
+
+
+`npm install`
+
+
+`cd ../pdf-server`
+
+
+`npm install`
+
+
+`npm run devClient`
+
 
 Rename sample-env file to .env and config it.
 ## Available Scripts
