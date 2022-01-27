@@ -20,7 +20,7 @@
 `npm run devClient`
 
 
-Rename sample-env file to .env and config it.
+Recommended: Rename sample-env file to .env and config it.
 ## Available Scripts
 
 ### Development
